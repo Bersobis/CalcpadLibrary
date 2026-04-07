@@ -1,0 +1,289 @@
+#md on
+'<h3>Date Inițiale</h3>
+L = 12*.m
+T = 8.1*.m
+H_u = 7.1*.m
+
+p_k = 12.5*(kN/m^2)
+E = 210000*(N/mm^2)
+
+'S275
+f_y = 275MPa
+γ_M0 = 1
+t = 5*.mm
+
+
+'<h3>Proiectarea Platelajului</h3>
+
+'<h5>1. Valori Caracteristice</h5>
+
+g_TGS5 = 0.41kN/m^2
+
+'<h6>Incarcari Utile</h6>
+p_k
+
+'Încărcarea de calcul pentru verificări la stări limită ultime
+
+q_d = (1.35*g_TGS5 + 1.5*p_k)*1mm|N/mm
+
+'Încărcarea pentru verificări la stări limită de serviciu
+
+q_k = (g_TGS5 + p_k)*1mm|N/mm
+
+'Determinarea parametrului α prin metoda simplificată
+
+t_c = t - 1mm
+
+a = 1500*.mm
+t = 5*.mm
+ν = 0.3
+
+D = (E*t_c^3)/(12*(1 - ν^2))|N*mm^2/mm
+
+w_o = (5*q_k*a^4)/(384*D)
+
+
+k = (3*w_o^2/mm^2)/t_c^2
+
+α_1 = root(k/2 + sqrt(k^2/4 + 1/27); 3)
+α_2 = root(k/2 - sqrt(k^2/4 + 1/27); 3)
+α = α_1 + α_2
+
+
+'<h3>Determinarea solicitărilor maxime de calcul în placă</h3>
+
+M_max,Ed = (q_d*a^2)/8*(1/(1 + α))|N*mm
+
+γ_d = q_d/q_k
+N_Ed = (γ_d*((π^2*D)/(a^2))*α)*(1mm)
+N_Ed = N_Ed|N
+'<h3>Verificarea la starea limită ultimă de rezistenţă</h3>
+
+
+σ_N,Ed = N_Ed/(t_c*1mm)|MPa
+σ_M,Ed = 6/(t_c^2*1mm)*M_max,Ed|MPa
+
+σ_max,Ed = σ_N,Ed + σ_M,Ed
+
+γ_Μ0 = 1
+σ_max,Ed < f_y/γ_Μ0
+
+
+
+'<h3>Verificarea la starea limită de serviciu de deformaţie</h3>
+
+w_adm = a/100
+
+w_max = w_o*1/(1 + α)
+
+
+
+'<h1>Proiectarea grinzi secundare</h1>
+
+'Valori caracteristice ale actiunilor
+
+g_TGS5
+g_IPE360 = 72.73daN/m
+g_GS = g_IPE360
+p = p_k
+
+
+'<h3>Încărcarea de calcul pentru verificări la stări limită ultime</h3>
+
+q_d = 1.35*(g_TGS5*a + g_GS) + 1.5*p*a
+
+
+'<h3>Solicitări maxime de calcul</h3>
+l = T
+M_max,Ed = q_d*l^2/8
+V_max,Ed = q_d*l/2
+
+'<h3>Alegerea secţiunii</h3>
+
+W_pl,y,nec = M_max,Ed/(f_y/γ_M0)|mm^3
+
+
+N_ed = γ_d*(4*D)/a^2*u^2
+
+
+
+
+
+'<h1>Proiectarea Grinzi Principale curente</h1>
+
+'Incaracari caracteristice
+
+g_TGS5
+g_GS
+g_GP = 0.25*kN/m^2*L
+
+'Incarcari SLU
+
+'Încărcarea concentrate:'F_d = (1.35*(g_TGS5*a + g_GS) + 1.5*p*a)*T
+
+'Greutate Proprie:'q_d = 1.35*g_GP
+
+'Incarcari SLS
+'Incarcari concentrate permanent:'F_k,u = g_TGS5*a*T + g_IPE360*T
+
+'Incarcari concentrate utile:'F_k,u = p*a*T
+
+'Incarcare proprie:'q_k = g_GP
+
+'Determinarea eforturilor sectionale de calcul
+
+n_GS = L/a
+
+V_max,Ed = (n_GS*F_d + q_d*L)/2
+
+
+
+'## 1. Date Inițiale și Materiale
+' Proprietățile oțelului (S235)
+f_y = 235MPa
+E = 210000MPa
+G = 81000MPa
+ε = sqr(235MPa/f_y)
+
+' Coeficienți parțiali de siguranță (SLU)
+γ_M0 = 1.0
+γ_M1 = 1.0
+γ_G = 1.35
+γ_Q = 1.5
+
+' Geometria platformei
+L = 10.5m' Deschiderea grinzii principale
+l_sec = 6.0m' Deschiderea grinzii secundare
+a = 1.5m' Distanța dintre grinzile secundare (lungimea de flambaj lateral)
+
+' Încărcări caracteristice
+g_tgs = 0.41kN/m^2' Greutate tablă striată
+g_gs = 0.422kN/m' Greutate grindă secundară
+g_gp = 1.8kN/m' Greutate estimată grindă principală
+p = 12.0kN/m^2' Încărcare utilă
+
+'## 2. Determinarea Eforturilor Secționale de Calcul (SLU)
+' Încărcarea concentrată provenită din reacțiunea grinzilor secundare
+F_d = (γ_G*(g_tgs*a + g_gs) + γ_Q*p*a)*l_sec
+
+' Greutatea de calcul a grinzii principale (încărcare distribuită)
+q_d = γ_G*g_gp
+
+' Forța tăietoare maximă pe reazem
+n_gs = L/a' Numărul de interspații
+V_max_Ed = (n_gs*F_d + q_d*L)/2
+
+' Momentul încovoietor maxim de calcul (la mijlocul deschiderii, x = L/2)
+x_mid = L/2
+M_max_Ed = V_max_Ed*x_mid - (q_d*x_mid^2)/2 - F_d*6*a
+
+'## 3. Geometria Secțiunii Compuse Sudate Propuse
+' Parametrii secțiunii transversale
+h_w = 1000mm' Înălțimea inimii
+t_w = 13mm' Grosimea inimii
+b = 270mm' Lățimea tălpii
+t_f = 18mm' Grosimea tălpii
+
+' Caracteristici secționale de bază
+h_f = h_w + t_f' Distanța între axele tălpilor
+h = h_w + 2*t_f' Înălțimea totală a grinzii
+A = t_w*h_w + 2*b*t_f
+A_vz = t_w*h_w
+
+' Module de rezistență plastică
+W_pl_y = (t_w*h_w^2)/4 + b*t_f*h_f
+W_pl_z = 2*(t_f*b^2/4) + h_w*t_w^2/4
+
+' Momente de inerție
+I_y = (t_w*h_w^3)/12 + 2*((b*t_f^3)/12 + b*t_f*(h_f/2)^2)
+I_z = (h_w*t_w^3)/12 + 2*((t_f*b^3)/12)
+I_t = (2*b*t_f^3 + (h - t_f)*t_w^3)/3
+I_w = I_z*(h - t_f)^2/4
+
+'## 4. Verificarea Clasei Secțiunii
+' Zveltețea tălpii comprimate
+c_f = (b - t_w)/2
+λ_f = c_f/t_f
+' Limita Clasa 2 pentru tălpi
+limita_f = 10*ε
+#if λ_f ≤ limita_f
+	    ' Secțiunea tălpii este de Clasa 2 sau 1.
+#else
+	    ' ATENȚIE: Secțiunea tălpii depășește Clasa 2.
+#end if
+
+' Zveltețea inimii
+λ_w = h_w/t_w
+' Limita Clasa 2 pentru inimi la încovoiere
+limita_w = 83*ε
+#if λ_w ≤ limita_w
+	    ' Secțiunea inimii este de Clasa 2 sau 1.
+#else
+	    ' ATENȚIE: Secțiunea inimii depășește Clasa 2.
+#end if
+
+'## 5. Verificări la Stări Limită Ultime (SLU) de Rezistență
+'### 5.1 Verificarea la încovoiere
+M_c_Rd = W_pl_y*f_y/γ_M0
+Raport_M = M_max_Ed/M_c_Rd
+#if Raport_M ≤ 1
+	    ' Verificare la moment încovoietor: **ÎNDEPLINITĂ**
+#else
+	    ' Verificare la moment încovoietor: **NEÎNDEPLINITĂ**
+#end if
+
+'### 5.2 Verificarea la forfecare pură
+τ_yd = f_y/(sqr(3)*γ_M0)
+V_c_Rd = A_vz*τ_yd
+Raport_V = V_max_Ed/V_c_Rd
+#if Raport_V ≤ 1
+	    ' Verificare la forfecare: **ÎNDEPLINITĂ**
+#else
+	    ' Verificare la forfecare: **NEÎNDEPLINITĂ**
+#end if
+
+'### 5.3 Interacțiunea Încovoiere - Forfecare
+Raport_MV = V_max_Ed/V_c_Rd
+#if Raport_MV ≤ 0.5
+	    ' V_Ed <= 0.5 * V_c_Rd. Nu este necesară reducerea momentului plastic rezistent.
+#else
+	    ' V_Ed > 0.5 * V_c_Rd. Este necesară reducerea rezistenței la încovoiere.
+#end if
+
+'## 6. Verificarea Stabilității Generale - Metoda Generală
+
+
+L_cr = a' Lungimea de flambaj lateral-torsional
+
+C_1 = 1.0' Coeficient dependent de diagrama de momente
+C_2 = 0.45' Coeficient pentru sarcini aplicate transversal
+z_g = h/2' Sarcina aplicată la talpa superioară (efect destabilizator)
+
+' Momentul critic elastic (Formula Generală)
+Termen_1 = I_w/I_z
+Termen_2 = (L_cr^2*G*I_t)/(π^2*E*I_z)
+Termen_3 = (C_2*z_g)^2
+
+M_cr = C_1*(π^2*E*I_z)/L_cr^2*(sqrt((I_w/I_z) + ((L_cr^2*G*I_t)/(π^2*E*I_z)) + (C_2*z_g)^2) - C_2*z_g)
+
+' Zveltețea relativă
+λ_bar_LT = sqr(M_c_Rd/M_cr)
+
+' Factorul de imperfecțiune (Curba d pentru profile sudate cu h/b > 2)
+α_LT = 0.76
+
+' Coeficienți de reducere
+Φ_LT = 0.5*(1 + α_LT*(λ_bar_LT - 0.2) + λ_bar_LT^2)
+χ_LT_calc = 1/(Φ_LT + sqr(abs(Φ_LT^2 - λ_bar_LT^2)))
+χ_LT = min(χ_LT_calc; 1.0)
+
+' Momentul rezistent de calcul la încovoiere-răsucire
+M_b_Rd = χ_LT*W_pl_y*f_y/γ_M1
+Raport_Deversare = M_max_Ed/M_b_Rd
+
+#if Raport_Deversare ≤ 1
+	    ' Verificare la deversare: **ÎNDEPLINITĂ**
+#else
+	    ' Verificare la deversare: **NEÎNDEPLINITĂ**
+#end if
+
